@@ -26,32 +26,19 @@ Many of the ideas in this notebook are described in the two YOLO papers: [Redmon
 ## 1 - Problem Statement
 
 You are working on a self-driving car. As a critical component of this project, you'd like to first build a car detection system. To collect data, you've mounted a camera to the hood (meaning the front) of the car, which takes pictures of the road ahead every few seconds while you drive around. 
-
-<center>
-<video width="400" height="200" src="nb_images/road_video_compressed2.mp4" type="video/mp4" controls>
-</video>
-</center>
-
-<caption><center> Pictures taken from a car-mounted camera while driving around Silicon Valley. <br> We thank [drive.ai](htps://www.drive.ai/) for providing this dataset.
-</center></caption>
-
-
-<img src="nb_images/box_label.png" style="width:500px;height:250;">
-<caption><center> <u> **Figure 1** </u>: **Definition of a box**<br> </center></caption>
-
-If you have 80 classes that you want the object detector to recognize, you can represent the class label $c$ either as an integer from 1 to 80, or as an 80-dimensional vector (with 80 numbers) one component of which is 1 and the rest of which are 0. The video lectures had used the latter representation; in this notebook, we will use both representations, depending on which is more convenient for a particular step.  
+We thank [drive.ai](htps://www.drive.ai/) for providing this dataset.
 
 
 ### Model details
 
 #### Inputs and outputs
 - The **input** is a batch of images, and each image has the shape (m, 608, 608, 3)
-- The **output** is a list of bounding boxes along with the recognized classes. Each bounding box is represented by 6 numbers $(p_c, b_x, b_y, b_h, b_w, c)$ as explained above. If you expand $c$ into an 80-dimensional vector, each bounding box is then represented by 85 numbers. 
+- The **output** is a list of bounding boxes along with the recognized classes.
 
 #### Anchor Boxes
 * Anchor boxes are chosen by exploring the training data to choose reasonable height/width ratios that represent the different classes.  For this assignment, 5 anchor boxes were chosen for you (to cover the 80 classes), and stored in the file './model_data/yolo_anchors.txt'
-* The dimension for anchor boxes is the second to last dimension in the encoding: $(m, n_H,n_W,anchors,classes)$.
-* The YOLO architecture is: IMAGE (m, 608, 608, 3) -> DEEP CNN -> ENCODING (m, 19, 19, 5, 85).  
+* The dimension for anchor boxes is the second to last dimension in the encoding.
+
 
 
 #### Encoding
@@ -68,6 +55,8 @@ For simplicity, we will flatten the last two last dimensions of the shape (19, 1
 
 <img src="nb_images/flatten.png" style="width:700px;height:400;">
 <caption><center> <u> **Figure 3** </u>: **Flattening the last two last dimensions**<br> </center></caption>
+
+
 
 #### Class score
 
@@ -190,61 +179,6 @@ with tf.Session() as test_a:
     classes.shape = (?,)
 
 
-**Output**:
-
-<table>
-    <tr>
-        <td>
-            **scores[2]**
-        </td>
-        <td>
-           10.7506
-        </td>
-    </tr>
-    <tr>
-        <td>
-            **boxes[2]**
-        </td>
-        <td>
-           [ 8.42653275  3.27136683 -0.5313437  -4.94137383]
-        </td>
-    </tr>
-
-    <tr>
-        <td>
-            **classes[2]**
-        </td>
-        <td>
-           7
-        </td>
-    </tr>
-        <tr>
-        <td>
-            **scores.shape**
-        </td>
-        <td>
-           (?,)
-        </td>
-    </tr>
-    <tr>
-        <td>
-            **boxes.shape**
-        </td>
-        <td>
-           (?, 4)
-        </td>
-    </tr>
-
-    <tr>
-        <td>
-            **classes.shape**
-        </td>
-        <td>
-           (?,)
-        </td>
-    </tr>
-
-</table>
 
 **Note** In the test for `yolo_filter_boxes`, we're using random numbers to test the function.  In real data, the `box_class_probs` would contain non-zero values between 0 and 1 for the probabilities.  The box coordinates in `boxes` would also be chosen so that lengths and heights are non-negative.
 
@@ -445,61 +379,6 @@ with tf.Session() as test_b:
     classes.shape = (10,)
 
 
-**Output**:
-
-<table>
-    <tr>
-        <td>
-            **scores[2]**
-        </td>
-        <td>
-           6.9384
-        </td>
-    </tr>
-    <tr>
-        <td>
-            **boxes[2]**
-        </td>
-        <td>
-           [-5.299932    3.13798141  4.45036697  0.95942086]
-        </td>
-    </tr>
-
-    <tr>
-        <td>
-            **classes[2]**
-        </td>
-        <td>
-           -2.24527
-        </td>
-    </tr>
-        <tr>
-        <td>
-            **scores.shape**
-        </td>
-        <td>
-           (10,)
-        </td>
-    </tr>
-    <tr>
-        <td>
-            **boxes.shape**
-        </td>
-        <td>
-           (10, 4)
-        </td>
-    </tr>
-
-    <tr>
-        <td>
-            **classes.shape**
-        </td>
-        <td>
-           (10,)
-        </td>
-    </tr>
-
-</table>
 
 ### Wrapping up the filtering
 
@@ -588,62 +467,6 @@ with tf.Session() as test_b:
     boxes.shape = (10, 4)
     classes.shape = (10,)
 
-
-**Output**:
-
-<table>
-    <tr>
-        <td>
-            **scores[2]**
-        </td>
-        <td>
-           138.791
-        </td>
-    </tr>
-    <tr>
-        <td>
-            **boxes[2]**
-        </td>
-        <td>
-           [ 1292.32971191  -278.52166748  3876.98925781  -835.56494141]
-        </td>
-    </tr>
-
-    <tr>
-        <td>
-            **classes[2]**
-        </td>
-        <td>
-           54
-        </td>
-    </tr>
-        <tr>
-        <td>
-            **scores.shape**
-        </td>
-        <td>
-           (10,)
-        </td>
-    </tr>
-    <tr>
-        <td>
-            **boxes.shape**
-        </td>
-        <td>
-           (10, 4)
-        </td>
-    </tr>
-
-    <tr>
-        <td>
-            **classes.shape**
-        </td>
-        <td>
-           (10,)
-        </td>
-    </tr>
-
-</table>
 
 ## Summary for YOLO:
 - Input image (608, 608, 3)
@@ -979,71 +802,6 @@ out_scores, out_boxes, out_classes = predict(sess, "test.jpg")
 ![png](output_49_1.png)
 
 
-**Output**:
-
-<table>
-    <tr>
-        <td>
-            **Found 7 boxes for test.jpg**
-        </td>
-    </tr>
-    <tr>
-        <td>
-            **car**
-        </td>
-        <td>
-           0.60 (925, 285) (1045, 374)
-        </td>
-    </tr>
-    <tr>
-        <td>
-            **car**
-        </td>
-        <td>
-           0.66 (706, 279) (786, 350)
-        </td>
-    </tr>
-    <tr>
-        <td>
-            **bus**
-        </td>
-        <td>
-           0.67 (5, 266) (220, 407)
-        </td>
-    </tr>
-    <tr>
-        <td>
-            **car**
-        </td>
-        <td>
-           0.70 (947, 324) (1280, 705)
-        </td>
-    </tr>
-    <tr>
-        <td>
-            **car**
-        </td>
-        <td>
-           0.74 (159, 303) (346, 440)
-        </td>
-    </tr>
-    <tr>
-        <td>
-            **car**
-        </td>
-        <td>
-           0.80 (761, 282) (942, 412)
-        </td>
-    </tr>
-    <tr>
-        <td>
-            **car**
-        </td>
-        <td>
-           0.89 (367, 300) (745, 648)
-        </td>
-    </tr>
-</table>
 
 
 
