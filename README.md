@@ -45,7 +45,7 @@ We thank [drive.ai](htps://www.drive.ai/) for providing this dataset.
 Let's look in greater detail at what this encoding represents. 
 
 <img src="nb_images/architecture.png" style="width:700px;height:400;">
-<caption><center> <u> **Figure 2** </u>: **Encoding architecture for YOLO**<br> </center></caption>
+
 
 If the center/midpoint of an object falls into a grid cell, that grid cell is responsible for detecting that object.
 
@@ -54,17 +54,16 @@ Since we are using 5 anchor boxes, each of the 19 x19 cells thus encodes informa
 For simplicity, we will flatten the last two last dimensions of the shape (19, 19, 5, 85) encoding. So the output of the Deep CNN is (19, 19, 425).
 
 <img src="nb_images/flatten.png" style="width:700px;height:400;">
-<caption><center> <u> **Figure 3** </u>: **Flattening the last two last dimensions**<br> </center></caption>
+
 
 
 
 #### Class score
 
 Now, for each box (of each cell) we will compute the following element-wise product and extract a probability that the box contains a certain class.  
-The class score is $score_{c,i} = p_{c} \times c_{i}$: the probability that there is an object $p_{c}$ times the probability that the object is a certain class $c_{i}$.
+
 
 <img src="nb_images/probability_extraction.png" style="width:700px;height:400;">
-<caption><center> <u> **Figure 4** </u>: **Find the class detected by each box**<br> </center></caption>
 
 
 
@@ -76,15 +75,6 @@ In the figure above, we plotted only boxes for which the model had assigned a hi
 - Select only one box when several boxes overlap with each other and detect the same object.
 
 
-
-### Filtering with a threshold on class scores
-
-You are going to first apply a filter by thresholding. You would like to get rid of any box for which the class "score" is less than a chosen threshold. 
-
-The model gives you a total of 19x19x5x85 numbers, with each box described by 85 numbers. It is convenient to rearrange the (19,19,5,85) (or (19,19,425)) dimensional tensor into the following variables:  
-- `box_confidence`: tensor of shape $(19 \times 19, 5, 1)$ containing $p_c$ (confidence probability that there's some object) for each of the 5 boxes predicted in each of the 19x19 cells.
-- `boxes`: tensor of shape $(19 \times 19, 5, 4)$ containing the midpoint and dimensions $(b_x, b_y, b_h, b_w)$ for each of the 5 boxes in each cell.
-- `box_class_probs`: tensor of shape $(19 \times 19, 5, 80)$ containing the "class probabilities" $(c_1, c_2, ... c_{80})$ for each of the 80 classes for each of the 5 boxes per cell.
 
 #### Implement `yolo_filter_boxes()`.
 1. Compute box scores by doing the elementwise product as described in Figure 4 ($p \times c$).  
@@ -187,29 +177,21 @@ with tf.Session() as test_a:
 Even after filtering by thresholding over the class scores, you still end up with a lot of overlapping boxes. A second filter for selecting the right boxes is called non-maximum suppression (NMS). 
 
 <img src="nb_images/non-max-suppression.png" style="width:500px;height:400;">
-<caption><center> <u> **Figure 7** </u>: In this example, the model has predicted 3 cars, but it's actually 3 predictions of the same car. Running non-max suppression (NMS) will select only the most accurate (highest probability) of the 3 boxes. <br> </center></caption>
+In this example, the model has predicted 3 cars, but it's actually 3 predictions of the same car. Running non-max suppression (NMS) will select only the most accurate (highest probability) of the 3 boxes.
 
 
 Non-max suppression uses the very important function called **"Intersection over Union"**, or IoU.
 <img src="nb_images/iou.png" style="width:500px;height:400;">
-<caption><center> <u> **Figure 8** </u>: Definition of "Intersection over Union". <br> </center></caption>
+Definition of "Intersection over Union".
 
 #### Implement iou():
 - In this code, we use the convention that (0,0) is the top-left corner of an image, (1,0) is the upper-right corner, and (1,1) is the lower-right corner. In other words, the (0,0) origin starts at the top left corner of the image. As x increases, we move to the right.  As y increases, we move down.
-- For this exercise, we define a box using its two corners: upper left $(x_1, y_1)$ and lower right $(x_2,y_2)$, instead of using the midpoint, height and width. (This makes it a bit easier to calculate the intersection).
-- To calculate the area of a rectangle, multiply its height $(y_2 - y_1)$ by its width $(x_2 - x_1)$. (Since $(x_1,y_1)$ is the top left and $x_2,y_2$ are the bottom right, these differences should be non-negative.
-- To find the **intersection** of the two boxes $(xi_{1}, yi_{1}, xi_{2}, yi_{2})$: 
-    - Feel free to draw some examples on paper to clarify this conceptually.
-    - The top left corner of the intersection $(xi_{1}, yi_{1})$ is found by comparing the top left corners $(x_1, y_1)$ of the two boxes and finding a vertex that has an x-coordinate that is closer to the right, and y-coordinate that is closer to the bottom.
-    - The bottom right corner of the intersection $(xi_{2}, yi_{2})$ is found by comparing the bottom right corners $(x_2,y_2)$ of the two boxes and finding a vertex whose x-coordinate is closer to the left, and the y-coordinate that is closer to the top.
-    - The two boxes **may have no intersection**.  You can detect this if the intersection coordinates you calculate end up being the top right and/or bottom left corners of an intersection box.  Another way to think of this is if you calculate the height $(y_2 - y_1)$ or width $(x_2 - x_1)$ and find that at least one of these lengths is negative, then there is no intersection (intersection area is zero).  
-    - The two boxes may intersect at the **edges or vertices**, in which case the intersection area is still zero.  This happens when either the height or width (or both) of the calculated intersection is zero.
+
 
 - `xi1` = **max**imum of the x1 coordinates of the two boxes
 - `yi1` = **max**imum of the y1 coordinates of the two boxes
 - `xi2` = **min**imum of the x2 coordinates of the two boxes
 - `yi2` = **min**imum of the y2 coordinates of the two boxes
-- `inter_area` = You can use `max(height, 0)` and `max(width, 0)`
 
 
 
@@ -474,7 +456,6 @@ with tf.Session() as test_b:
 - After flattening the last two dimensions, the output is a volume of shape (19, 19, 425):
     - Each cell in a 19x19 grid over the input image gives 425 numbers. 
     - 425 = 5 x 85 because each cell contains predictions for 5 boxes, corresponding to 5 anchor boxes, as seen in lecture. 
-    - 85 = 5 + 80 where 5 is because $(p_c, b_x, b_y, b_h, b_w)$ has 5 numbers, and 80 is the number of classes we'd like to detect
 - You then select only few boxes based on:
     - Score-thresholding: throw away boxes that have detected a class with a score less than the threshold
     - Non-max suppression: Compute the Intersection over Union and avoid selecting overlapping boxes
